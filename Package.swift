@@ -18,6 +18,13 @@ let package = Package(
         ),
         .executableTarget(
             name: "SIDLord",
+            dependencies: ["SIDCore"],
+            resources: [
+                .process("Resources")
+            ]
+        ),
+        .testTarget(
+            name: "SIDCoreCompatibilityTests",
             dependencies: ["SIDCore"]
         ),
     ]

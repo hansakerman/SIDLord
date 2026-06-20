@@ -2,6 +2,8 @@
 
 Standalone macOS-first instrument editor focused on GoatTracker-compatible workflow.
 
+> **Status:** Very early **beta / lab** project. Expect rough edges, partial implementations, and breaking changes while core behavior is still being explored.
+
 Project handover / decisions log: `WORKING_NOTES.md`
 
 ## Current iteration

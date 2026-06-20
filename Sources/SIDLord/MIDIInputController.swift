@@ -19,6 +19,10 @@ final class MIDIInputController {
     }
 
     func start() throws {
+        if client != 0 || inputPort != 0 {
+            stop()
+        }
+
         var status = MIDIClientCreateWithBlock("SIDLord MIDI Client" as CFString, &client) { [weak self] _ in
             self?.refreshConnections()
         }
@@ -27,7 +31,11 @@ final class MIDIInputController {
         status = MIDIInputPortCreateWithBlock(client, "SIDLord MIDI Input" as CFString, &inputPort) { [weak self] packetList, _ in
             self?.process(packetList: packetList)
         }
-        guard status == noErr else { throw MIDIError.inputPortCreate(status) }
+        guard status == noErr else {
+            MIDIClientDispose(client)
+            client = 0
+            throw MIDIError.inputPortCreate(status)
+        }
 
         refreshConnections()
     }
@@ -155,4 +163,30 @@ final class MIDIInputController {
 enum MIDIError: Error {
     case clientCreate(OSStatus)
     case inputPortCreate(OSStatus)
+}
+
+extension MIDIError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .clientCreate(let status):
+            return "MIDI client create failed (\(status)): \(MIDIError.describe(status))"
+        case .inputPortCreate(let status):
+            return "MIDI input port create failed (\(status)): \(MIDIError.describe(status))"
+        }
+    }
+
+    private static func describe(_ status: OSStatus) -> String {
+        let value = UInt32(bitPattern: status)
+        let bytes: [UInt8] = [
+            UInt8((value >> 24) & 0xff),
+            UInt8((value >> 16) & 0xff),
+            UInt8((value >> 8) & 0xff),
+            UInt8(value & 0xff)
+        ]
+        if bytes.allSatisfy({ $0 >= 32 && $0 <= 126 }),
+           let code = String(bytes: bytes, encoding: .ascii) {
+            return code
+        }
+        return "OSStatus \(status)"
+    }
 }
